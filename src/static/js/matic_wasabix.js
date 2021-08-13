@@ -475,7 +475,7 @@ async function getWasabixPoolInfo(App, pool, poolIndex) {
   const userWorkingAmount = userInfo[1]
   const userUnclaimed = await pool.pendingReward(poolIndex, App.YOUR_ADDRESS)
 
-  const poolToken = await getToken(App, token, pool.address)
+  const poolToken = await getMaticToken(App, token, pool.address)
   return {
     poolToken,
     rewardsPerWeek: (((rewardRate / 1e18) * 86400) / 3) * 7,
@@ -633,8 +633,8 @@ function printWasabixContractLinks(
   const claim = async function() {
     return wasabixContract_claim(wasabixAbi, wasabixAddr, poolIndex, App)
   }
-  const etherscanUrl = `<a href='https://etherscan.com/address/${poolAddress}' target='_blank'>Staking Token Contract</a>`
-  _print(etherscanUrl)
+  const polygonscanUrl = `<a href='https://polygonscan.com/address/${poolAddress}' target='_blank'>Staking Token Contract</a>`
+  _print(polygonscanUrl)
   _print_link(`Deposit ${unstaked.toFixed(fixedDecimals)} ${stakeTokenTicker}`, approveAndDeposit)
   _print_link(`Withdraw ${userStaked.toFixed(fixedDecimals)} ${stakeTokenTicker}`, withdraw)
   _print(`\n`)
@@ -696,9 +696,16 @@ async function loadWasabixStakingPoolsContract(
   const poolCount = parseInt(await stakingPoolContract.poolLength(), 10)
 
   const poolInfos = await Promise.all(
-    [...Array(poolCount / 1).keys()].map(async x => {
-      return await getWasabixPoolInfo(App, stakingPoolContract, x)
-    })
+    [...Array(poolCount / 1).keys()]
+      .filter(function(x) {
+        if (x == 1 || x == 2 || x == 3 || x == 4) {
+          return false
+        }
+        return true
+      })
+      .map(async x => {
+        return await getWasabixPoolInfo(App, stakingPoolContract, x)
+      })
   )
 
   var tokenAddresses = [].concat.apply(
@@ -708,7 +715,7 @@ async function loadWasabixStakingPoolsContract(
 
   await Promise.all(
     tokenAddresses.map(async address => {
-      tokens[address] = await getToken(App, address, stakingPoolAddress)
+      tokens[address] = await getMaticToken(App, address, stakingPoolAddress)
     })
   )
 
@@ -719,7 +726,7 @@ async function loadWasabixStakingPoolsContract(
   _print('Finished reading smart contracts.\n')
 
   let aprs = []
-  for (i = 0; i < poolCount; i++) {
+  for (i = 0; i < poolInfos.length; i++) {
     const apr = printWasabixPool(
       App,
       stakingPoolAbi,
@@ -769,37 +776,25 @@ async function main() {
   _print(`Initialized ${App.YOUR_ADDRESS}\n`)
   _print('Reading smart contracts...\n')
 
-  const WASABIX_POOL_ADDRESS = '0x47e3492439528fEF29bc5Da55Aa49ED0EFA15c6E' //StakingPools
+  const WASABIX_POOL_ADDRESS = '0x0EdA8090E9A86668484915e5E1856E83480FA010' //StakingPools
   const rewardTokenTicker = 'WASABI'
-  const rewardTokenAddress = '0x896e145568624a498c5a909187363AE947631503' //WASABI
+  const rewardTokenAddress = '0xc2db4c131ADaF01c15a1DB654c040c8578929D55' //WASABI
 
   const tokens = {}
-  var prices = await lookUpTokenPrices([
-    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-    '0x896e145568624a498c5a909187363AE947631503',
-  ])
+  const prices = await getMaticPrices()
 
-  const UNI_POOL_ADDRESS = '0x8f9ef75cd6e610dd8acf8611c344573032fb9c3d'
-  const uni = await getToken(App, UNI_POOL_ADDRESS, App.YOUR_ADDRESS)
+  const UNI_POOL_ADDRESS = '0x89e110150fb7df2f20cf79201b81877baffc3797'
+  const uni = await getMaticToken(App, UNI_POOL_ADDRESS, App.YOUR_ADDRESS)
   for (const address of uni.tokens) {
-    tokens[address] = await getToken(App, address, UNI_POOL_ADDRESS)
+    tokens[address] = await getMaticToken(App, address, UNI_POOL_ADDRESS)
   }
   const pp = getPoolPrices(tokens, prices, uni)
 
-  prices['0xc2db4c131ADaF01c15a1DB654c040c8578929D55'] = {}
-  prices['0xc2db4c131ADaF01c15a1DB654c040c8578929D55']['usd'] = 1 //waUSD
+  prices['0x3d244d67D680CaDcccf34F8F996CEA777B6d9FFE'] = {}
+  prices['0x3d244d67D680CaDcccf34F8F996CEA777B6d9FFE']['usd'] = 1 //waPUSD
 
-  prices['0xfd8e70e83e399307db3978d3f34b060a06792c36'] = {}
-  prices['0xfd8e70e83e399307db3978d3f34b060a06792c36']['usd'] =
-    prices['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']['usd']
-
-  prices['0xcbf335Bb8eE86A5A88bEbCda4506a665aA8d7022'] = {}
-  prices['0xcbf335Bb8eE86A5A88bEbCda4506a665aA8d7022']['usd'] = 1 //waLusd
-
-  prices['0x6a1fbefdF67445C7F531b4F3e04Ffb37b7b13794'] = {}
-  prices['0x6a1fbefdF67445C7F531b4F3e04Ffb37b7b13794']['usd'] =
-    prices['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2']['usd'] //waETH
+  prices['0xa982a2a9EbE0623de7350c228fc5335a413AD5C4'] = {}
+  prices['0xa982a2a9EbE0623de7350c228fc5335a413AD5C4']['usd'] = 2 //waPUSDLP
 
   await loadWasabixStakingPoolsContract(
     App,

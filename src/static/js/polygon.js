@@ -118,7 +118,8 @@ const main = async() => {
         ["XBull               ",`<a href="xbull"           >Various</a>`,"XBULL        ","https://xbull.finance"],
         ["Augury              ",`<a href="augury"          >Various</a>`,"OMEN         ","https://augury.finance"],
         ["PolyMeme V2         ",`<a href="polymemev2"      >Various</a>`,"MEME         ","https://polyme.me"],
-        ["WorldSwap Bali      ",`<a href="worldswap_dps"   >Various</a>`,"DPS          ","https://bali.worldswap.finance"]
+        ["WorldSwap Bali      ",`<a href="worldswap_dps"   >Various</a>`,"DPS          ","https://bali.worldswap.finance"],
+        ["Wasabix             ",`<a href="wasabix"         >Various</a>`,"WASABI       ","https://polygon.wasabix.finance"]
       ]
   }
 
